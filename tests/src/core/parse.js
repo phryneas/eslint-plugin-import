@@ -76,7 +76,7 @@ describe('parse(content, { settings, ecmaFeatures })', function () {
     const parseSpy = sinon.spy();
     const parserOptions = { ecmaFeatures: { jsx: true } };
     parseStubParser.parse = parseSpy;
-    expect(parse.bind(null, path, content, { settings: { 'import/parsers': { [parseStubParserPath]: [ '.js' ] } }, parserPath: null, parserOptions })).not.to.throw(Error);
+    expect(parse.bind(null, path, content, { settings: { 'import/parsers': { [parseStubParserPath]: ['.js'] } }, parserPath: null, parserOptions })).not.to.throw(Error);
     expect(parseSpy.callCount, 'custom parser to be called once').to.equal(1);
   });
 
@@ -123,7 +123,7 @@ describe('parse(content, { settings, ecmaFeatures })', function () {
   it('prefers parsers specified in the settings over languageOptions.parser', () => {
     const parseSpy = sinon.spy();
     parseStubParser.parse = parseSpy;
-    expect(parse.bind(null, path, content, { settings: { 'import/parsers': { [parseStubParserPath]: [ '.js' ] } }, parserPath: null, languageOptions: { parser: { parse() {} } } })).not.to.throw(Error);
+    expect(parse.bind(null, path, content, { settings: { 'import/parsers': { [parseStubParserPath]: ['.js'] } }, parserPath: null, languageOptions: { parser: { parse() {} } } })).not.to.throw(Error);
     expect(parseSpy.callCount, 'custom parser to be called once').to.equal(1);
   });
 
@@ -137,5 +137,19 @@ describe('parse(content, { settings, ecmaFeatures })', function () {
     const parseSpy = sinon.spy();
     parseStubParser.parse = parseSpy;
     expect(parse.bind(null, path, content, { settings: {}, parserPath: 'espree', languageOptions: { parserOptions: { sourceType: 'module', ecmaVersion: 2015, ecmaFeatures: { jsx: true } } }, parserOptions: { sourceType: 'script' } })).not.to.throw(Error);
+  });
+
+  it('passes ecmaVersion and sourceType from languageOptions to parser', () => {
+    const parseSpy = sinon.spy();
+    const languageOptions = { ecmaVersion: 'latest', sourceType: 'module', parserOptions: { ecmaFeatures: { jsx: true } } };
+    parseStubParser.parse = parseSpy;
+    parse(path, content, { settings: {}, parserPath: parseStubParserPath, languageOptions });
+    expect(parseSpy.args[0][1], 'custom parser to clone the parserOptions object').to.not.equal(languageOptions);
+    expect(parseSpy.args[0][1], 'custom parser to get ecmaFeatures in parserOptions which is a clone of ecmaFeatures passed in')
+      .to.have.property('ecmaFeatures')
+      .that.is.eql(languageOptions.parserOptions.ecmaFeatures)
+      .and.is.not.equal(languageOptions.parserOptions.ecmaFeatures);
+    expect(parseSpy.args[0][1], 'custom parser to get ecmaVersion in parserOptions from languageOptions').to.have.property('ecmaVersion', languageOptions.ecmaVersion);
+    expect(parseSpy.args[0][1], 'custom parser to get sourceType in parserOptions from languageOptions').to.have.property('sourceType', languageOptions.sourceType);
   });
 });

@@ -6,7 +6,7 @@ import moduleVisitor from 'eslint-module-utils/moduleVisitor';
 import docsUrl from '../docsUrl';
 import has from 'has';
 
-const enumValues = { enum: [ 'always', 'ignorePackages', 'never' ] };
+const enumValues = { enum: ['always', 'ignorePackages', 'never'] };
 const patternProperties = {
   type: 'object',
   patternProperties: { '.*': enumValues },
@@ -21,7 +21,6 @@ const properties = {
 };
 
 function buildProperties(context) {
-
   const result = {
     defaultConfig: 'never',
     pattern: {},
@@ -29,7 +28,6 @@ function buildProperties(context) {
   };
 
   context.options.forEach((obj) => {
-
     // If this is a string, set defaultConfig to its value
     if (typeof obj === 'string') {
       result.defaultConfig = obj;
@@ -37,7 +35,11 @@ function buildProperties(context) {
     }
 
     // If this is not the new structure, transfer all props to result.pattern
-    if (obj.pattern === undefined && obj.ignorePackages === undefined && obj.checkTypeImports === undefined) {
+    if (
+      obj.pattern === undefined &&
+      obj.ignorePackages === undefined &&
+      obj.checkTypeImports === undefined
+    ) {
       Object.assign(result.pattern, obj);
       return;
     }
@@ -70,7 +72,8 @@ module.exports = {
     type: 'suggestion',
     docs: {
       category: 'Style guide',
-      description: 'Ensure consistent use of file extension within the import path.',
+      description:
+        'Ensure consistent use of file extension within the import path.',
       url: docsUrl('extensions'),
     },
 
@@ -83,10 +86,7 @@ module.exports = {
         },
         {
           type: 'array',
-          items: [
-            enumValues,
-            properties,
-          ],
+          items: [enumValues, properties],
           additionalItems: false,
         },
         {
@@ -101,10 +101,7 @@ module.exports = {
         },
         {
           type: 'array',
-          items: [
-            enumValues,
-            patternProperties,
-          ],
+          items: [enumValues, patternProperties],
           additionalItems: false,
         },
       ],
@@ -112,7 +109,6 @@ module.exports = {
   },
 
   create(context) {
-
     const props = buildProperties(context);
 
     function getModifier(extension) {
@@ -120,7 +116,10 @@ module.exports = {
     }
 
     function isUseOfExtensionRequired(extension, isPackage) {
-      return getModifier(extension) === 'always' && (!props.ignorePackages || !isPackage);
+      return (
+        getModifier(extension) === 'always' &&
+        (!props.ignorePackages || !isPackage)
+      );
     }
 
     function isUseOfExtensionForbidden(extension) {
@@ -130,33 +129,49 @@ module.exports = {
     function isResolvableWithoutExtension(file) {
       const extension = path.extname(file);
       const fileWithoutExtension = file.slice(0, -extension.length);
-      const resolvedFileWithoutExtension = resolve(fileWithoutExtension, context);
+      const resolvedFileWithoutExtension = resolve(
+        fileWithoutExtension,
+        context
+      );
 
       return resolvedFileWithoutExtension === resolve(file, context);
     }
 
     function isExternalRootModule(file) {
+      if (file === '.' || file === '..') {
+        return false;
+      }
       const slashCount = file.split('/').length - 1;
 
-      if (slashCount === 0)  { return true; }
-      if (isScoped(file) && slashCount <= 1) { return true; }
+      if (slashCount === 0) {
+        return true;
+      }
+      if (isScoped(file) && slashCount <= 1) {
+        return true;
+      }
       return false;
     }
 
     function checkFileExtension(source, node) {
       // bail if the declaration doesn't have a source, e.g. "export { foo };", or if it's only partially typed like in an editor
-      if (!source || !source.value) { return; }
+      if (!source || !source.value) {
+        return;
+      }
 
       const importPathWithQueryString = source.value;
 
       // don't enforce anything on builtins
-      if (isBuiltIn(importPathWithQueryString, context.settings)) { return; }
+      if (isBuiltIn(importPathWithQueryString, context.settings)) {
+        return;
+      }
 
       const importPath = importPathWithQueryString.replace(/\?(.*)$/, '');
 
       // don't enforce in root external packages as they may have names with `.js`.
       // Like `import Decimal from decimal.js`)
-      if (isExternalRootModule(importPath)) { return; }
+      if (isExternalRootModule(importPath)) {
+        return;
+      }
 
       const resolvedPath = resolve(importPath, context);
 
@@ -165,27 +180,46 @@ module.exports = {
       const extension = path.extname(resolvedPath || importPath).slice(1);
 
       // determine if this is a module
-      const isPackage = isExternalModule(
-        importPath,
-        resolve(importPath, context),
-        context,
-      ) || isScoped(importPath);
+      const isPackage =
+        isExternalModule(importPath, resolve(importPath, context), context) ||
+        isScoped(importPath);
 
-      const validExtensions = getValidExtensionFor(context, importPath, extension);
-      if (!extension || !validExtensions.some((extension) => importPath.endsWith(`.${extension}`))) {
+      const validExtensions = getValidExtensionFor(
+        context,
+        importPath,
+        extension
+      );
+      if (
+        !extension ||
+        !validExtensions.some((extension) =>
+          importPath.endsWith(`.${extension}`)
+        )
+      ) {
         // ignore type-only imports and exports
-        if (props.checkTypeImports !== true && (node.importKind === 'type' || node.exportKind === 'type')) { return; }
-        const extensionRequired = isUseOfExtensionRequired(extension, isPackage);
+        if (
+          !props.checkTypeImports &&
+          (node.importKind === 'type' || node.exportKind === 'type')
+        ) {
+          return;
+        }
+        const extensionRequired = isUseOfExtensionRequired(
+          extension,
+          isPackage
+        );
         const extensionForbidden = isUseOfExtensionForbidden(extension);
         if (extensionRequired && !extensionForbidden) {
           context.report({
             node: source,
-            message:
-              `Missing file extension ${extension ? `"${extension}" ` : ''}for "${importPathWithQueryString}"`,
+            message: `Missing file extension ${
+              extension ? `"${extension}" ` : ''
+            }for "${importPathWithQueryString}"`,
           });
         }
       } else if (extension) {
-        if (isUseOfExtensionForbidden(extension) && isResolvableWithoutExtension(importPath)) {
+        if (
+          isUseOfExtensionForbidden(extension) &&
+          isResolvableWithoutExtension(importPath)
+        ) {
           context.report({
             node: source,
             message: `Unexpected use of file extension "${extension}" for "${importPathWithQueryString}"`,
@@ -222,8 +256,13 @@ const defaultExtensionAlias = {
 
 function getValidExtensionFor(context, importPath, resolvedExtension) {
   let extensionAlias = {};
-  if (context.settings['import/resolver']  && context.settings['import/resolver'].typescript) {
-    extensionAlias = context.settings['import/resolver'].typescript.extensionAlias || defaultExtensionAlias;
+  if (
+    context.settings['import/resolver'] &&
+    context.settings['import/resolver'].typescript
+  ) {
+    extensionAlias =
+      context.settings['import/resolver'].typescript.extensionAlias ||
+      defaultExtensionAlias;
   }
 
   const importedExtension = path.extname(importPath);
@@ -232,4 +271,3 @@ function getValidExtensionFor(context, importPath, resolvedExtension) {
   }
   return [resolvedExtension];
 }
-

@@ -4,7 +4,7 @@ import { getTSParsers, test, SYNTAX_CASES, testVersion, parsers } from '../utils
 
 import { CASE_SENSITIVE_FS } from 'eslint-module-utils/resolve';
 
-import { RuleTester } from 'eslint';
+import { RuleTester } from '../rule-tester';
 
 const ruleTester = new RuleTester();
 const rule = require('rules/no-unresolved');
@@ -136,15 +136,6 @@ function runResolverTests(resolver) {
         ],
       }),
 
-      rest({
-        code: "import bar from './baz';",
-        errors: [
-          {
-            message: "Unable to resolve path to module './baz'.",
-            type: 'Literal',
-          },
-        ],
-      }),
       rest({
         code: "import bar from './baz';",
         errors: [
@@ -387,7 +378,7 @@ ruleTester.run('no-unresolved (import/resolve legacy)', rule, {
   invalid: [
     test({
       code: 'import * as foo from "jsx-module/foo"',
-      errors: [ "Unable to resolve path to module 'jsx-module/foo'." ],
+      errors: ["Unable to resolve path to module 'jsx-module/foo'."],
     }),
   ],
 });
@@ -536,12 +527,12 @@ context('TypeScript', () => {
       invalid: [
         test({
           code: 'import { JSONSchema7Type } from "@types/json-schema";',
-          errors: [ "Unable to resolve path to module '@types/json-schema'." ],
+          errors: ["Unable to resolve path to module '@types/json-schema'."],
           parser,
         }),
         test({
           code: 'export { JSONSchema7Type } from "@types/json-schema";',
-          errors: [ "Unable to resolve path to module '@types/json-schema'." ],
+          errors: ["Unable to resolve path to module '@types/json-schema'."],
           parser,
         }),
       ],

@@ -27,8 +27,7 @@ describe('package', function () {
         expect(err).not.to.exist;
 
         files.filter(isJSFile).forEach(function (f) {
-          expect(module.rules).to.have
-            .property(path.basename(f, '.js'));
+          expect(module.rules).to.have.property(path.basename(f, '.js'));
         });
 
         done();
@@ -46,6 +45,13 @@ describe('package', function () {
     });
   });
 
+  function getRulePath(ruleName) {
+    // 'require' does not work with dynamic paths because of the compilation step by babel
+    // (which resolves paths according to the root folder configuration)
+    // the usage of require.resolve on a static path gets around this
+    return path.resolve(require.resolve('rules/no-unresolved'), '..', ruleName);
+  }
+
   it('has configs only for rules that exist', function () {
     for (const configFile in module.configs) {
       const preamble = 'import/';
@@ -54,13 +60,6 @@ describe('package', function () {
         expect(() => require(getRulePath(rule.slice(preamble.length))))
           .not.to.throw(Error);
       }
-    }
-
-    function getRulePath(ruleName) {
-      // 'require' does not work with dynamic paths because of the compilation step by babel
-      // (which resolves paths according to the root folder configuration)
-      // the usage of require.resolve on a static path gets around this
-      return path.resolve(require.resolve('rules/no-unresolved'), '..', ruleName);
     }
   });
 

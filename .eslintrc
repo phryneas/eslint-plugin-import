@@ -19,6 +19,7 @@
         "ecmaVersion": 2020,
     },
     "rules": {
+        "array-bracket-spacing": [2, "never"],
         "arrow-body-style": [2, "as-needed"],
         "arrow-parens": [2, "always"],
         "arrow-spacing": [2, { "before": true, "after": true }],
@@ -95,6 +96,7 @@
         "no-multiple-empty-lines": [2, { "max": 1, "maxEOF": 1, "maxBOF": 0 }],
         "no-return-assign": [2, "always"],
         "no-trailing-spaces": 2,
+        "no-use-before-define": [2, { "functions": true, "classes": true, "variables": true }],
         "no-var": 2,
         "object-curly-spacing": [2, "always"],
         "object-shorthand": ["error", "always", {
@@ -189,36 +191,16 @@
             },
         },
         {
-            "files": "resolvers/**",
+            "files": [
+                "resolvers/**",
+                "utils/**",
+            ],
             "env": {
                 "es6": false,
             },
-        },
-        {
-            "files": "resolvers/webpack/**",
-            "rules": {
-                "no-console": 1,
-                "prefer-template": 0,
-                "prefer-object-spread": 0,
-                "prefer-rest-params": 0,
-            },
-            "env": {
-                "es6": true,
-            },
-        },
-        {
-            "files": [
-                "resolvers/*/test/**/*",
-            ],
-            "env": {
-                "mocha": true,
-                "es6": false
-            },
-        },
-        {
-            "files": "utils/**",
             "parserOptions": {
-                "ecmaVersion": 6,
+                "sourceType": "module",
+                "ecmaVersion": 2016,
             },
             "rules": {
                 "comma-dangle": ["error", {
@@ -228,9 +210,47 @@
                     "exports": "always-multiline",
                     "functions": "never"
                 }],
+                "prefer-destructuring": "off",
                 "prefer-object-spread": "off",
+                "prefer-rest-params": "off",
+                "prefer-spread": "off",
                 "prefer-template": "off",
+            }
+        },
+        {
+            "files": [
+                "resolvers/webpack/**",
+                "utils/**",
+            ],
+            "rules": {
                 "no-console": 1,
+            },
+        },
+        {
+            "files": [
+                "utils/**", // TODO
+            ],
+            "rules": {
+                "no-use-before-define": "off",
+            },
+        },
+        {
+            "files": [
+                "resolvers/webpack/index.js",
+                "resolvers/webpack/test/example.js",
+                "utils/parse.js",
+            ],
+            "rules": {
+                "no-console": "off",
+            },
+        },
+        {
+            "files": [
+                "resolvers/*/test/**/*",
+            ],
+            "env": {
+                "mocha": true,
+                "es6": false
             },
         },
         {

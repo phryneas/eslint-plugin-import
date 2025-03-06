@@ -10,23 +10,23 @@ In order to provide a consistent use of file extensions across your code base, t
 
 This rule either takes one string option, one object option, or a string and an object option. If it is the string `"never"` (the default value), then the rule forbids the use for any extension. If it is the string `"always"`, then the rule enforces the use of extensions for all import statements. If it is the string `"ignorePackages"`, then the rule enforces the use of extensions for all import statements except package imports.
 
-```
+```json
 "import/extensions": [<severity>, "never" | "always" | "ignorePackages"]
 ```
 
 By providing an object you can configure each extension separately.
 
-```
+```json
 "import/extensions": [<severity>, {
   <extension>: "never" | "always" | "ignorePackages"
 }]
 ```
 
- For example `{ "js": "always", "json": "never" }` would always enforce the use of the `.js` extension but never allow the use of the `.json` extension.
+For example `{ "js": "always", "json": "never" }` would always enforce the use of the `.js` extension but never allow the use of the `.json` extension.
 
 By providing both a string and an object, the string will set the default setting for all extensions, and the object can be used to set granular overrides for specific extensions.
 
-```
+```json
 "import/extensions": [
   <severity>,
   "never" | "always" | "ignorePackages",
@@ -40,7 +40,7 @@ For example, `["error", "never", { "svg": "always" }]` would require that all ex
 
 `ignorePackages` can be set as a separate boolean option like this:
 
-```
+```json
 "import/extensions": [
   <severity>,
   "never" | "always" | "ignorePackages",
@@ -64,7 +64,7 @@ When disallowing the use of certain extensions this rule makes an exception and 
 
 For example, given the following folder structure:
 
-```
+```pt
 ├── foo
 │   ├── bar.js
 │   ├── bar.json
@@ -106,6 +106,14 @@ import express from 'express/index';
 import * as path from 'path';
 ```
 
+The following patterns are considered problems when the configuration is set to "never" and the option "checkTypeImports" is set to `true`:
+
+```js
+import type { Foo } from './foo.ts';
+
+export type { Foo } from './foo.ts';
+```
+
 The following patterns are considered problems when configuration set to "always":
 
 ```js
@@ -140,7 +148,6 @@ import foo from './foo';
 import bar from './bar';
 
 import Component from './Component';
-
 ```
 
 The following patterns are not considered problems when configuration set to "ignorePackages":
@@ -154,7 +161,7 @@ import Component from './Component.jsx';
 
 import express from 'express';
 
-import foo from '@/foo'
+import foo from '@/foo';
 ```
 
 The following patterns are not considered problems when configuration set to `['error', 'always', {ignorePackages: true} ]`:
@@ -169,7 +176,7 @@ import express from 'express';
 import foo from '@/foo';
 ```
 
-The following patterns are considered problems when the option "checkTypeImports" is set to `true`:
+The following patterns are considered problems when the configuration is set to "always" and the option "checkTypeImports" is set to `true`:
 
 ```js
 import type { Foo } from './foo';

@@ -1,16 +1,26 @@
 import path from 'path';
-
+import { getPhysicalFilename } from 'eslint-module-utils/contextCompat';
 import resolve from 'eslint-module-utils/resolve';
 import moduleVisitor from 'eslint-module-utils/moduleVisitor';
 import isGlob from 'is-glob';
 import { Minimatch } from 'minimatch';
-import docsUrl from '../docsUrl';
+
 import importType from '../core/importType';
+import docsUrl from '../docsUrl';
 
 const containsPath = (filepath, target) => {
   const relative = path.relative(target, filepath);
   return relative === '' || !relative.startsWith('..');
 };
+
+function isMatchingTargetPath(filename, targetPath) {
+  if (isGlob(targetPath)) {
+    const mm = new Minimatch(targetPath);
+    return mm.match(filename);
+  }
+
+  return containsPath(filename, targetPath);
+}
 
 module.exports = {
   meta: {
@@ -76,19 +86,12 @@ module.exports = {
     const options = context.options[0] || {};
     const restrictedPaths = options.zones || [];
     const basePath = options.basePath || process.cwd();
-    const currentFilename = context.getPhysicalFilename ? context.getPhysicalFilename() : context.getFilename();
-    const matchingZones = restrictedPaths.filter((zone) => [].concat(zone.target)
-      .map((target) => path.resolve(basePath, target))
-      .some((targetPath) => isMatchingTargetPath(currentFilename, targetPath)));
-
-    function isMatchingTargetPath(filename, targetPath) {
-      if (isGlob(targetPath)) {
-        const mm = new Minimatch(targetPath);
-        return mm.match(filename);
-      }
-
-      return containsPath(filename, targetPath);
-    }
+    const currentFilename = getPhysicalFilename(context);
+    const matchingZones = restrictedPaths.filter(
+      (zone) => [].concat(zone.target)
+        .map((target) => path.resolve(basePath, target))
+        .some((targetPath) => isMatchingTargetPath(currentFilename, targetPath)),
+    );
 
     function isValidExceptionPath(absoluteFromPath, absoluteExceptionPath) {
       const relativeExceptionPath = path.relative(absoluteFromPath, absoluteExceptionPath);
@@ -231,8 +234,7 @@ module.exports = {
         reportInvalidExceptions(validatorsWithInvalidExceptions, node);
 
         const applicableValidatorsForImportPathExcludingExceptions = applicableValidatorsForImportPath
-          .filter((validator) => validator.hasValidExceptions)
-          .filter((validator) => !validator.isPathException(absoluteImportPath));
+          .filter((validator) => validator.hasValidExceptions && !validator.isPathException(absoluteImportPath));
         reportImportsInRestrictedZone(applicableValidatorsForImportPathExcludingExceptions, node, importPath, zone.message);
       });
     }

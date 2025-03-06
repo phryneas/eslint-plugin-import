@@ -3,6 +3,7 @@
  * @author Thomas Grainger
  */
 
+import { getPhysicalFilename } from 'eslint-module-utils/contextCompat';
 import { getFileExtensions } from 'eslint-module-utils/ignore';
 import moduleVisitor from 'eslint-module-utils/moduleVisitor';
 import resolve from 'eslint-module-utils/resolve';
@@ -33,7 +34,7 @@ function normalize(fn) {
 }
 
 function countRelativeParents(pathSegments) {
-  return pathSegments.reduce((sum, pathSegment) => pathSegment === '..' ? sum + 1 : sum, 0);
+  return pathSegments.filter((x) => x === '..').length;
 }
 
 module.exports = {
@@ -60,7 +61,7 @@ module.exports = {
   },
 
   create(context) {
-    const currentDir = path.dirname(context.getPhysicalFilename ? context.getPhysicalFilename() : context.getFilename());
+    const currentDir = path.dirname(getPhysicalFilename(context));
     const options = context.options[0];
 
     function checkSourceValue(source) {
